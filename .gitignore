@@ -1,14 +1,3 @@
-# node_modules
-.DS_Store
-*.log
+node_modules/
 dist/
-build/
-*.local
-.env
-.env.*
-!.env.example
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+.vite/
