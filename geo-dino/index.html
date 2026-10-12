@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Гео-Динозавр — викторина по географии</title>
+  <meta name="description" content="Раннер с динозавром и вопросами по географии: правильный ответ открывает прыжок, рекорд сохраняется.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦖</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- ======== Игровое поле на весь экран ======== -->
+  <main class="stage" id="stage" aria-label="Игровое поле">
+    <canvas id="canvas" class="canvas"></canvas>
+
+    <!-- HUD: счёт / звук / рекорд -->
+    <header class="hud" id="hud">
+      <div class="hud-item">Счёт:&nbsp;<span id="hud-score">0</span></div>
+      <button class="sound-btn" id="btn-sound" type="button" aria-label="Выключить звук" aria-pressed="true" title="Звук вкл/выкл">🔊</button>
+      <div class="hud-item hud-best">Лучший:&nbsp;<span id="hud-best">0</span></div>
+    </header>
+
+    <!-- Экран меню -->
+    <div class="screen menu" id="screen-menu">
+      <h1 class="title">ГЕО-ДИНОЗАВР</h1>
+      <p class="subtitle">Отвечай на вопросы по географии и перепрыгивай кактусы.<br>
+        Правильный ответ <b>открывает прыжок</b> — прыгай пробелом или тапом по экрану.<br>
+        Неправильный ответ завершает попытку.</p>
+      <button class="btn btn-primary btn-lg" id="btn-start" type="button">▶&nbsp;Играть</button>
+      <div class="menu-badges" aria-hidden="true">
+        <span>🌐 География</span><span>🦖 Динозаврик</span><span>🏆 Рекорды</span><span>⎵ Прыжок</span>
+      </div>
+    </div>
+
+    <!-- Карточка вопроса -->
+    <div class="qcard" id="qcard" role="dialog" aria-modal="true" aria-labelledby="q-text" hidden>
+      <div class="qcard-top">
+        <span class="q-chip" id="q-chip">Вопрос</span>
+        <span class="q-count" id="q-count"></span>
+      </div>
+      <p class="q-text" id="q-text"></p>
+      <div class="answers" id="answers" role="group" aria-label="Варианты ответа"></div>
+      <p class="q-hint" id="q-hint">Клик по ответу или клавиши 1–4 · после верного ответа прыгай: пробел / тап</p>
+    </div>
+
+    <!-- Сообщение о правильном ответе -->
+    <div class="toast" id="toast" hidden><span class="toast-dot" aria-hidden="true">✔</span><span id="toast-text">Правильно! Прыгай!</span></div>
+
+    <!-- Итоговый экран (поверх всего поля) -->
+    <section class="results" id="results" aria-live="polite" hidden>
+      <div class="results-grid">
+        <div class="res-col res-score">
+          <h2 class="res-title">Твой результат</h2>
+          <div class="res-big"><span id="res-score">0</span><span class="res-max" id="res-max">/ 100</span></div>
+          <p class="res-compare" id="res-compare"></p>
+          <p class="res-best">Рекорд: <span id="res-best">0</span></p>
+          <div class="pbar" role="img" aria-label="Прогресс результата"><div class="pbar-fill" id="pbar-fill"></div></div>
+          <p class="pbar-note">Шкала из 100 очков: одно пройденное препятствие (вопрос + прыжок) = 1 очко.
+            Если счёт превысил 100, показываем фактическое число, полоса остаётся заполненной.</p>
+          <p class="record-badge" id="record-badge" hidden>🏆 Новый рекорд!</p>
+        </div>
+
+        <div class="res-col res-meme" id="res-meme-col"></div>
+
+        <div class="res-col res-stats">
+          <h3 class="stats-title">Ты справился с:</h3>
+          <ul class="stats-list" id="stats-list"></ul>
+          <p class="stats-tagline"><b>Больше географии — больше прыжков!</b></p>
+          <button class="btn btn-primary btn-block" id="btn-next" type="button">Дальше</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Видео после результата; окончание ролика автоматически начинает новую игру -->
+    <section class="video-screen" id="video-screen" aria-labelledby="video-title" hidden>
+      <div class="video-content">
+        <h2 class="video-title" id="video-title">Сюрприз перед новым забегом</h2>
+        <video id="result-video" controls playsinline preload="metadata" aria-label="Видео после результата">
+          <source src="png/Rick_Roll_Video_Meme_Template_V1.mp4" type="video/mp4">
+          Твой браузер не поддерживает воспроизведение видео.
+        </video>
+        <p class="video-error" id="video-error" role="alert" hidden>Браузер не смог открыть видео. Запусти игру через локальный сервер и попробуй ещё раз.</p>
+        <div class="video-actions">
+          <button class="btn btn-primary" id="btn-retry-video" type="button" hidden>Попробовать ещё раз</button>
+          <button class="btn btn-light" id="btn-skip-video" type="button">Пропустить и начать заново</button>
+        </div>
+        <p class="video-note">После окончания видео начнётся новая игра.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/questions.js"></script>
+  <script src="js/memes.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
