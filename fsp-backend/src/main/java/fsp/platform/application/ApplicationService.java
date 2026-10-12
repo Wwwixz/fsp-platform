@@ -13,6 +13,7 @@ import fsp.platform.competition.CompetitionType;
 import fsp.platform.security.AuthUser;
 import fsp.platform.team.TeamEntity;
 import fsp.platform.team.TeamRepository;
+import fsp.platform.team.TeamStatus;
 import fsp.platform.user.Role;
 import fsp.platform.user.UserEntity;
 import fsp.platform.user.UserRepository;
@@ -110,6 +111,9 @@ public class ApplicationService {
       }
       if (!team.getCompetition().getId().equals(competition.getId())) {
         throw ApiException.badRequest("Команда создана для другого соревнования");
+      }
+      if (team.getStatus() != TeamStatus.FORMED) {
+        throw ApiException.badRequest("Команда должна быть укомплектована перед подачей заявки");
       }
     } else if (user.getRole() == Role.ATHLETE && !competition.isIndividualFormat()) {
       throw ApiException.badRequest("Соревнование требует командного участия");
