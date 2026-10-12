@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { AuthLayout } from '../components/AuthLayout';
 import { EyeIcon, EyeOffIcon, BuildingIcon, UserIcon } from '../components/icons';
 import { useAuth } from '../auth/AuthContext';
+import { api } from '../api/client';
 import { homePath } from '../data/navigation';
 import type { Role } from '../types';
 
@@ -24,7 +25,7 @@ const labelBase =
 const errorBase = 'mt-1.5 block text-xs font-medium text-rose-400';
 
 export function RegisterPage() {
-  const { user, register } = useAuth();
+  const { user, loading, register } = useAuth();
   const navigate = useNavigate();
 
   const [name, setName] = useState('');
@@ -32,15 +33,26 @@ export function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [role, setRole] = useState<Role>('athlete');
+  const [region, setRegion] = useState('Москва');
+  const [regions, setRegions] = useState<string[]>([]);
   const [agree, setAgree] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [serverError, setServerError] = useState('');
+  const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
 
-  if (user) {
+  useEffect(() => {
+    api
+      .get<string[]>('/meta/regions')
+      .then(setRegions)
+      .catch(() => setRegions([]));
+  }, []);
+
+  if (!loading && user) {
     return <Navigate to={homePath(user.role)} replace />;
   }
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const next: FormErrors = {};
     if (name.trim().length < 3) {
@@ -61,13 +73,26 @@ export function RegisterPage() {
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
-    register({ name: name.trim(), email: email.trim(), password, role });
-    navigate(homePath(role));
+    setBusy(true);
+    setServerError('');
+    try {
+      await register({ name: name.trim(), email: email.trim(), password, role, region });
+      navigate(homePath(role));
+    } catch (err) {
+      setServerError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <AuthLayout active="register">
       <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+        {serverError && (
+          <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-300">
+            {serverError}
+          </div>
+        )}
         <div>
           <label className={labelBase} htmlFor="reg-name">
             Имя и фамилия
@@ -187,6 +212,29 @@ export function RegisterPage() {
         </div>
 
         <div>
+          <label className={labelBase} htmlFor="reg-region">
+            Регион
+          </label>
+          <select
+            id="reg-region"
+            value={region}
+            onChange={(e) => setRegion(e.target.value)}
+            className={inputBase}
+          >
+            {regions.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1.5 text-xs text-slate-500">
+            {role === 'athlete'
+              ? 'От региона зависят доступные региональные соревнования'
+              : 'Модерируете заявки и создаёте соревнования своего региона'}
+          </p>
+        </div>
+
+        <div>
           <label className="flex items-center gap-2.5 text-sm text-slate-400 cursor-pointer hover:text-slate-300 transition">
             <input
               type="checkbox"
@@ -201,9 +249,10 @@ export function RegisterPage() {
 
         <button
           type="submit"
-          className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 active:scale-[0.98]"
+          disabled={busy}
+          className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 active:scale-[0.98] disabled:opacity-60"
         >
-          Зарегистрироваться
+          {busy ? 'Создаём аккаунт…' : 'Зарегистрироваться'}
         </button>
       </form>
     </AuthLayout>

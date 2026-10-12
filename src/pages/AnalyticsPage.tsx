@@ -1,21 +1,36 @@
+import { useEffect, useState } from 'react';
 import { AppShell } from '../components/AppShell';
 import { Avatar } from '../components/Avatar';
 import { StatusBadge } from '../components/StatusBadge';
-import { latestApplications, monthlyStats, organizerStats } from '../data/mock';
+import { api } from '../api/client';
+import type { AnalyticsResponse } from '../api/types';
 
 const cardClass =
   'rounded-3xl border border-slate-800/60 bg-slate-900/80 p-6 shadow-xl shadow-black/20 backdrop-blur-sm transition-all duration-300 ease-in-out';
 
 const cardTitleClass = 'text-sm font-semibold uppercase tracking-wider text-slate-400';
 
-const stats: { label: string; value: number; delta: string; tone: 'green' | 'red' }[] = [
-  { label: 'Всего соревнований', value: organizerStats.competitions, delta: organizerStats.competitionsDelta, tone: 'green' },
-  { label: 'Всего заявок', value: organizerStats.applications, delta: organizerStats.applicationsDelta, tone: 'green' },
-  { label: 'Одобрено', value: organizerStats.approved, delta: organizerStats.approvedShare, tone: 'green' },
-  { label: 'Отклонено', value: organizerStats.rejected, delta: organizerStats.rejectedShare, tone: 'red' },
-];
-
 export function AnalyticsPage() {
+  const [data, setData] = useState<AnalyticsResponse | null>(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    api
+      .get<AnalyticsResponse>('/analytics')
+      .then(setData)
+      .catch((e: Error) => setError(e.message));
+  }, []);
+
+  const stats: { label: string; value: number; delta: string; tone: 'green' | 'red' }[] = [
+    { label: 'Всего соревнований', value: data?.stats.competitions ?? 0, delta: 'на платформе', tone: 'green' },
+    { label: 'Всего заявок', value: data?.stats.applications ?? 0, delta: 'за текущий год', tone: 'green' },
+    { label: 'Одобрено', value: data?.stats.approved ?? 0, delta: data?.stats.approvedShare ?? '—', tone: 'green' },
+    { label: 'Отклонено', value: data?.stats.rejected ?? 0, delta: data?.stats.rejectedShare ?? '—', tone: 'red' },
+  ];
+
+  const monthlyStats = data?.monthly ?? [];
+  const latestApplications = data?.latest ?? [];
+  const maxMonth = Math.max(1, ...monthlyStats.map((m) => Math.max(m.approved, m.rejected)));
   return (
     <AppShell>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10 space-y-8">
@@ -25,6 +40,12 @@ export function AnalyticsPage() {
           </h1>
           <p className="mt-2 text-sm text-slate-400">Сводка по соревнованиям и заявкам за сезон</p>
         </div>
+
+        {error && (
+          <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-5 py-4 text-sm font-semibold text-rose-300">
+            {error}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
           {stats.map((stat) => (
@@ -65,17 +86,22 @@ export function AnalyticsPage() {
             </div>
 
             <div className="relative h-56 flex items-end gap-3 border-b border-slate-800 pb-0">
+              {monthlyStats.length === 0 && (
+                <p className="w-full text-center text-sm font-semibold text-slate-500">
+                  В текущем году заявок пока нет
+                </p>
+              )}
               {monthlyStats.map((item) => (
                 <div key={item.month} className="flex-1 flex h-full flex-col items-center gap-2">
                   <div className="flex h-full w-full items-end justify-center gap-1.5">
                     <div
                       className="w-4 rounded-t-md bg-gradient-to-t from-emerald-600 to-emerald-400"
-                      style={{ height: `${(item.approved / 100) * 100}%` }}
+                      style={{ height: `${(item.approved / maxMonth) * 100}%` }}
                       title={`${item.month}: одобрено ${item.approved}`}
                     />
                     <div
                       className="w-4 rounded-t-md bg-gradient-to-t from-rose-600 to-rose-400"
-                      style={{ height: `${(item.rejected / 100) * 100}%` }}
+                      style={{ height: `${(item.rejected / maxMonth) * 100}%` }}
                       title={`${item.month}: отклонено ${item.rejected}`}
                     />
                   </div>
@@ -88,6 +114,9 @@ export function AnalyticsPage() {
           <section className={cardClass}>
             <h2 className={`${cardTitleClass} mb-6`}>Последние заявки</h2>
             <div className="flex flex-col">
+              {latestApplications.length === 0 && (
+                <p className="text-sm font-semibold text-slate-500">Заявок пока нет</p>
+              )}
               {latestApplications.map((item, index) => (
                 <div
                   key={item.id}

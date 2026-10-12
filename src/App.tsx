@@ -16,7 +16,10 @@ import { ResultsPage } from './pages/ResultsPage';
 import { ApplicationsPage } from './pages/ApplicationsPage';
 
 function RequireAuth({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  if (loading) {
+    return null; // ждём восстановления сессии по токену
+  }
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -25,7 +28,10 @@ function RequireAuth({ children }: { children: ReactNode }) {
 
 /* Разделы организатора: спортсменов отправляем на «Результаты». */
 function RequireRole({ role, children }: { role: Role; children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  if (loading) {
+    return null;
+  }
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -36,7 +42,10 @@ function RequireRole({ role, children }: { role: Role; children: ReactNode }) {
 }
 
 function RootRedirect() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  if (loading) {
+    return null;
+  }
   return <Navigate to={user ? homePath(user.role) : '/'} replace />;
 }
 

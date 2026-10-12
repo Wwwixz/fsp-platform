@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AppShell } from '../components/AppShell';
 import { Avatar } from '../components/Avatar';
 import { StatusBadge } from '../components/StatusBadge';
-import { mockApplications } from '../data/mock';
+import { api } from '../api/client';
 import type { Application, ApplicationStatus } from '../types';
 import {
   ChevronLeftIcon,
@@ -37,11 +37,21 @@ const pageBtnBase =
   'inline-flex items-center justify-center rounded-xl border border-slate-700/60 bg-slate-900/60 text-slate-400 transition-all duration-300 hover:border-slate-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60 disabled:opacity-40 disabled:cursor-not-allowed';
 
 export function ApplicationsPage() {
-  const [applications, setApplications] = useState<Application[]>(mockApplications);
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [tab, setTab] = useState<ApplicationStatus | 'all'>('all');
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+
+  useEffect(() => {
+    api
+      .get<Application[]>('/applications')
+      .then(setApplications)
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
     if (openMenuId === null) return;
@@ -74,9 +84,16 @@ export function ApplicationsPage() {
   const safePage = Math.min(page, pageCount);
   const visible = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
+  /* Решение организатора: PATCH на бекенд, при ошибке показываем её вместо молчаливой правки. */
   const setStatus = (id: number, status: ApplicationStatus) => {
-    setApplications((prev) => prev.map((app) => (app.id === id ? { ...app, status } : app)));
     setOpenMenuId(null);
+    setError('');
+    api
+      .patch<Application>(`/applications/${id}`, { status })
+      .then((updated) =>
+        setApplications((prev) => prev.map((app) => (app.id === id ? updated : app))),
+      )
+      .catch((e: Error) => setError(e.message));
   };
 
   const selectTab = (next: ApplicationStatus | 'all') => {
@@ -121,6 +138,11 @@ export function ApplicationsPage() {
         </div>
 
         <div className="flex flex-wrap items-end gap-4">
+          {error && (
+            <div className="w-full rounded-2xl border border-rose-500/30 bg-rose-500/10 px-5 py-4 text-sm font-semibold text-rose-300">
+              {error}
+            </div>
+          )}
           <div className="w-full md:w-auto md:min-w-[320px] md:flex-1">
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-400" htmlFor="applications-search">
               Поиск
@@ -160,7 +182,16 @@ export function ApplicationsPage() {
               </tr>
             </thead>
             <tbody>
-              {visible.map((app) => (
+              {loading && (
+                <tr>
+                  <td colSpan={5}>
+                    <div className="px-6 py-16 text-center text-sm font-semibold text-slate-400">
+                      Загрузка заявок…
+                    </div>
+                  </td>
+                </tr>
+              )}
+              {!loading && visible.map((app) => (
                 <tr key={app.id} className="transition-colors hover:bg-slate-800/40">
                   <td className={tdClass}>
                     <span className="inline-flex items-center gap-3">
@@ -239,7 +270,7 @@ export function ApplicationsPage() {
                   </td>
                 </tr>
               ))}
-              {visible.length === 0 && (
+              {!loading && visible.length === 0 && (
                 <tr>
                   <td colSpan={5}>
                     <div className="px-6 py-16 text-center">

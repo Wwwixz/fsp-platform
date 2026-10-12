@@ -14,33 +14,40 @@ const emailOrPhoneValid = (value: string) =>
   /^\S+@\S+\.\S+$/.test(value) || /^\+?[\d\s()-]{10,}$/.test(value);
 
 export function LoginPage() {
-  const { user, login } = useAuth();
+  const { user, loading, login } = useAuth();
   const navigate = useNavigate();
 
   const [identity, setIdentity] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [serverError, setServerError] = useState('');
+  const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState<{ identity?: string; password?: string }>({});
 
-  if (user) {
+  if (!loading && user) {
     return <Navigate to={homePath(user.role)} replace />;
   }
 
-  /* Демо-режим SSO: личный кабинет ФСП — аккаунт федерации (организатора). */
-  const handleFspLogin = () => {
-    const ssoUser = login('federation@fsp.ru', 'fsp-sso', {
-      name: 'Федерация ФСП',
-      role: 'organizer',
-    });
-    navigate(homePath(ssoUser.role));
+  /* Демо-вход представителя ФСП (организатора федерального уровня). */
+  const handleFspLogin = async () => {
+    setBusy(true);
+    setServerError('');
+    try {
+      const loggedIn = await login('federation@fsp.ru', 'password123');
+      navigate(homePath(loggedIn.role));
+    } catch (e) {
+      setServerError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const next: typeof errors = {};
     if (!emailOrPhoneValid(identity.trim())) {
-      next.identity = 'Укажите корректный email или телефон';
+      next.identity = 'Укажите корректный email';
     }
     if (password.length < 6) {
       next.password = 'Пароль должен содержать минимум 6 символов';
@@ -48,13 +55,26 @@ export function LoginPage() {
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
-    const loggedIn = login(identity.trim(), password);
-    navigate(homePath(loggedIn.role));
+    setBusy(true);
+    setServerError('');
+    try {
+      const loggedIn = await login(identity.trim(), password);
+      navigate(homePath(loggedIn.role));
+    } catch (err) {
+      setServerError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <AuthLayout active="login">
       <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+        {serverError && (
+          <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-300">
+            {serverError}
+          </div>
+        )}
         <div>
           <label
             className="block mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400"
@@ -136,9 +156,10 @@ export function LoginPage() {
 
         <button
           type="submit"
-          className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 active:scale-[0.98]"
+          disabled={busy}
+          className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 active:scale-[0.98] disabled:opacity-60"
         >
-          Войти
+          {busy ? 'Входим…' : 'Войти'}
         </button>
       </form>
 
@@ -167,7 +188,8 @@ export function LoginPage() {
 
       <button
         type="button"
-        className="mt-3 w-full inline-flex items-center justify-center gap-3 rounded-xl border border-slate-700/60 bg-slate-900/60 px-5 py-3 text-sm font-semibold text-slate-200 transition-all duration-300 hover:border-indigo-500/50 hover:bg-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60"
+        disabled={busy}
+        className="mt-3 w-full inline-flex items-center justify-center gap-3 rounded-xl border border-slate-700/60 bg-slate-900/60 px-5 py-3 text-sm font-semibold text-slate-200 transition-all duration-300 hover:border-indigo-500/50 hover:bg-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60 disabled:opacity-60"
         onClick={handleFspLogin}
       >
         <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-xs font-bold text-white" aria-hidden>

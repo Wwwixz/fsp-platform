@@ -1,7 +1,10 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PublicHeader from '../components/PublicHeader';
 import { Avatar } from '../components/Avatar';
 import { useAuth } from '../auth/AuthContext';
+import { api } from '../api/client';
+import type { CabinetResponse } from '../api/types';
 import {
   AwardIcon,
   CalendarIcon,
@@ -13,20 +16,6 @@ import {
   ZapIcon,
 } from '../components/icons';
 
-interface UpcomingEvent {
-  id: number;
-  title: string;
-  date: string;
-  status: 'approved' | 'pending';
-  icon: 'code' | 'shield';
-}
-
-const upcomingEvents: UpcomingEvent[] = [
-  { id: 1, title: 'Кубок Москвы по алгоритмам', date: '25 октября 2025', status: 'approved', icon: 'code' },
-  { id: 2, title: 'CTF — Региональный этап', date: '12 ноября 2025', status: 'pending', icon: 'shield' },
-];
-
-const eventStatusLabel = { approved: 'Подтверждено', pending: 'На рассмотрении' } as const;
 const eventStatusTone = {
   approved:
     'inline-flex items-center rounded-full bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold text-emerald-300 ring-1 ring-emerald-500/25',
@@ -34,9 +23,21 @@ const eventStatusTone = {
     'inline-flex items-center rounded-full bg-amber-500/10 px-3 py-1 text-[11px] font-semibold text-amber-300 ring-1 ring-amber-500/25',
 } as const;
 
+const eventStatusLabel = { approved: 'Подтверждено', pending: 'На рассмотрении' } as const;
+
 function Cabinet() {
   const { user } = useAuth();
-  const displayName = user?.name ?? 'Спортсмен';
+  const [data, setData] = useState<CabinetResponse | null>(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    api
+      .get<CabinetResponse>('/cabinet')
+      .then(setData)
+      .catch((e: Error) => setError(e.message));
+  }, []);
+
+  const displayName = data?.name ?? user?.name ?? 'Спортсмен';
   const firstName = displayName.split(' ')[0];
 
   return (
@@ -65,16 +66,29 @@ function Cabinet() {
           </Link>
         </div>
 
+        {error && (
+          <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-5 py-4 text-sm font-semibold text-rose-300">
+            {error}
+          </div>
+        )}
+
         {/* Профиль и ключевые показатели */}
         <div className="rounded-3xl border border-slate-800/60 bg-slate-900/80 p-6 shadow-xl shadow-black/20 backdrop-blur-sm transition-all duration-300 ease-in-out hover:border-slate-700/80 hover:shadow-indigo-500/5">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
             <Avatar name={displayName} size={72} />
             <div>
               <div className="text-xl font-bold tracking-tight text-white">{displayName}</div>
-              <div className="mt-0.5 text-sm text-slate-400">{user?.email}</div>
-              <span className="mt-2 inline-flex items-center rounded-full bg-violet-500/10 px-3 py-1 text-[11px] font-semibold text-violet-300 ring-1 ring-violet-500/25">
-                Спортсмен
-              </span>
+              <div className="mt-0.5 text-sm text-slate-400">{data?.email ?? user?.email}</div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <span className="inline-flex items-center rounded-full bg-violet-500/10 px-3 py-1 text-[11px] font-semibold text-violet-300 ring-1 ring-violet-500/25">
+                  {data?.role === 'organizer' ? 'Региональный представитель' : 'Спортсмен'}
+                </span>
+                {data?.region && (
+                  <span className="inline-flex items-center rounded-full bg-slate-500/10 px-3 py-1 text-[11px] font-semibold text-slate-300 ring-1 ring-slate-500/25">
+                    {data.region}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -84,9 +98,11 @@ function Cabinet() {
                 Рейтинг
               </span>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className="text-3xl font-extrabold tracking-tight text-white">1 450</span>
+                <span className="text-3xl font-extrabold tracking-tight text-white">
+                  {(data?.rating ?? 0).toLocaleString('ru-RU')}
+                </span>
                 <span className="inline-flex rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-300 ring-1 ring-emerald-500/25">
-                  +120 за месяц
+                  подтверждён результатами
                 </span>
               </div>
             </div>
@@ -94,19 +110,25 @@ function Cabinet() {
               <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
                 Место в регионе
               </span>
-              <div className="mt-2 text-3xl font-extrabold tracking-tight text-white">24</div>
+              <div className="mt-2 text-3xl font-extrabold tracking-tight text-white">
+                {data?.regionPlace ?? '—'}
+              </div>
             </div>
             <div className="rounded-2xl border border-slate-800/60 bg-slate-950/50 p-4 transition-all duration-300 ease-in-out hover:border-slate-700/80">
               <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
                 Победы
               </span>
-              <div className="mt-2 text-3xl font-extrabold tracking-tight text-white">4</div>
+              <div className="mt-2 text-3xl font-extrabold tracking-tight text-white">
+                {data?.wins ?? 0}
+              </div>
             </div>
             <div className="rounded-2xl border border-slate-800/60 bg-slate-950/50 p-4 transition-all duration-300 ease-in-out hover:border-slate-700/80">
               <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
-                Успешность
+                Успешность заявок
               </span>
-              <div className="mt-2 text-3xl font-extrabold tracking-tight text-white">98%</div>
+              <div className="mt-2 text-3xl font-extrabold tracking-tight text-white">
+                {data?.successRate ?? '—'}
+              </div>
             </div>
           </div>
         </div>
@@ -121,21 +143,17 @@ function Cabinet() {
             Смотреть все
           </Link>
         </div>
-        <div className="rounded-3xl border border-slate-800/60 bg-slate-900/80 p-6 shadow-xl shadow-black/20 backdrop-blur-sm transition-all duration-300 ease-in-out hover:border-slate-700/80 hover:shadow-indigo-500/5">
+        <div className="rounded-3xl border border-slate-800/60 bg-slate-900/80 p-6 shadow-xl shadow-black/20 backdrop-blur-sm">
           <div className="divide-y divide-slate-800/60">
-            {upcomingEvents.map((event) => {
-              const Icon = event.icon === 'code' ? CodeIcon : ShieldIcon;
-              const tileClass =
-                event.icon === 'code'
-                  ? 'bg-indigo-500/10 text-indigo-300 ring-1 ring-indigo-500/20 rounded-xl p-3'
-                  : 'bg-violet-500/10 text-violet-300 ring-1 ring-violet-500/20 rounded-xl p-3';
+            {(data?.upcomingEvents ?? []).map((event) => {
+              const Icon = event.discipline.includes('безопасности') ? ShieldIcon : CodeIcon;
               return (
                 <div
                   className="flex flex-col gap-4 py-4 transition-all duration-300 ease-in-out first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
                   key={event.id}
                 >
                   <div className="flex items-start gap-4">
-                    <span className={`inline-flex shrink-0 ${tileClass}`}>
+                    <span className="inline-flex shrink-0 rounded-xl bg-indigo-500/10 p-3 text-indigo-300 ring-1 ring-indigo-500/20">
                       <Icon size={22} />
                     </span>
                     <div>
@@ -161,6 +179,11 @@ function Cabinet() {
                 </div>
               );
             })}
+            {data && data.upcomingEvents.length === 0 && (
+              <p className="py-6 text-center text-sm font-semibold text-slate-400">
+                Пока нет активных заявок — найдите соревнование и подайте заявку!
+              </p>
+            )}
           </div>
         </div>
 
@@ -168,15 +191,14 @@ function Cabinet() {
         <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-600 p-8 shadow-xl shadow-indigo-500/20 transition-all duration-300 ease-in-out sm:p-10">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white ring-1 ring-white/20">
             <ZapIcon size={14} />
-            Сезон 2025
+            Сезон {new Date().getFullYear()}
           </span>
           <h2 className="mt-4 text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
             Твой прогресс в сезоне
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/80">
-            В этом месяце твой рейтинг вырос на{' '}
-            <strong className="font-bold text-white">+120 пунктов</strong>. Продолжай в том же
-            духе, чтобы попасть в сборную!
+            Рейтинг растёт автоматически, когда организатор публикует итоги соревнований с твоим
+            участием. Побед: <strong className="font-bold text-white">{data?.wins ?? 0}</strong>.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Link

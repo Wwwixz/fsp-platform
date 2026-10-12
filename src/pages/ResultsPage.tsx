@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AppShell } from '../components/AppShell';
-import { mockResults, resultDisciplines, resultSeasons } from '../data/mock';
+import { api } from '../api/client';
+import type { MyResultRow } from '../api/types';
 import { ChevronDownIcon, SearchIcon } from '../components/icons';
 
 const selectClass =
@@ -14,18 +15,36 @@ const thClass =
 const tdClass = 'border-b border-slate-800/50 px-6 py-4 text-sm';
 
 export function ResultsPage() {
-  const [season, setSeason] = useState('2025');
+  const [all, setAll] = useState<MyResultRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [season, setSeason] = useState('all');
   const [discipline, setDiscipline] = useState('all');
   const [type, setType] = useState('all');
   const [query, setQuery] = useState('');
 
+  useEffect(() => {
+    api
+      .get<MyResultRow[]>('/results/my')
+      .then(setAll)
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  /* Справочники фильтров строим из фактических данных пользователя. */
+  const seasons = useMemo(
+    () => [...new Set(all.map((r) => r.season))].sort((a, b) => b - a),
+    [all],
+  );
+  const disciplines = useMemo(() => [...new Set(all.map((r) => r.discipline))], [all]);
+
   const rows = useMemo(() => {
-    return mockResults
+    return all
       .filter((row) => (season === 'all' ? true : row.season === Number(season)))
       .filter((row) => (discipline === 'all' ? true : row.discipline === discipline))
       .filter((row) => (type === 'all' ? true : row.type === type))
       .filter((row) => row.title.toLowerCase().includes(query.trim().toLowerCase()));
-  }, [season, discipline, type, query]);
+  }, [all, season, discipline, type, query]);
 
   return (
     <AppShell>
@@ -47,7 +66,7 @@ export function ResultsPage() {
                 value={season}
                 onChange={(e) => setSeason(e.target.value)}
               >
-                {resultSeasons.map((s) => (
+                {seasons.map((s) => (
                   <option key={s} value={s}>
                     {s}
                   </option>
@@ -72,7 +91,7 @@ export function ResultsPage() {
                 onChange={(e) => setDiscipline(e.target.value)}
               >
                 <option value="all">Все дисциплины</option>
-                {resultDisciplines.map((d) => (
+                {disciplines.map((d) => (
                   <option key={d} value={d}>
                     {d}
                   </option>
@@ -137,7 +156,21 @@ export function ResultsPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
+              {loading && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-16 text-center text-sm font-semibold text-slate-400">
+                    Загрузка истории выступлений…
+                  </td>
+                </tr>
+              )}
+              {error && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-16 text-center text-sm font-semibold text-rose-300">
+                    {error}
+                  </td>
+                </tr>
+              )}
+              {!loading && !error && rows.map((row) => (
                 <tr key={row.id} className="transition-colors hover:bg-slate-800/40">
                   <td className={`${tdClass} text-slate-400`}>{row.date}</td>
                   <td className={`${tdClass} font-semibold text-slate-100`}>{row.title}</td>
@@ -146,7 +179,7 @@ export function ResultsPage() {
                   <td className={`${tdClass} text-center`}>{row.points}</td>
                 </tr>
               ))}
-              {rows.length === 0 && (
+              {!loading && !error && rows.length === 0 && (
                 <tr>
                   <td className="px-6 py-16 text-center" colSpan={5}>
                     <div className="px-6 py-16 text-center">

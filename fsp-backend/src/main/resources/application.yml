@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: fsp-backend
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/fsp}
+    username: ${DB_USER:fsp}
+    password: ${DB_PASSWORD:fsp}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+
+server:
+  port: ${PORT:8080}
+
+jwt:
+  # В проде значение передаётся через переменную окружения JWT_SECRET.
+  secret: ${JWT_SECRET:fsp-platform-dev-secret-key-change-me-in-production-0123456789abcdef}
+  ttl-days: 7
+
+logging:
+  level:
+    root: INFO

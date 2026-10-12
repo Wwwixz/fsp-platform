@@ -10,5 +10,11 @@ export default defineConfig({
   },
   css: {
     postcss: './postcss.config.js'
+  },
+  server: {
+    // Локальная разработка: запросы /api уходят в Java-бекенд на 8080.
+    proxy: {
+      '/api': 'http://localhost:8080'
+    }
   }
 })

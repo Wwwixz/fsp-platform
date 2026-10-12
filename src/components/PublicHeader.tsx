@@ -18,8 +18,10 @@ const baseLinks: NavLinkItem[] = [
   { to: '/results', label: 'Результаты' },
 ];
 
-const roleLabel = (role: 'athlete' | 'organizer') =>
-  role === 'organizer' ? 'Региональный представитель' : 'Спортсмен';
+const roleLabel = (role: 'athlete' | 'organizer', backendRole?: string) => {
+  if (role === 'athlete') return 'Спортсмен';
+  return backendRole === 'FEDERATION' ? 'Федерация ФСП' : 'Региональный представитель';
+};
 
 const PublicHeader: FC = () => {
   const { user, logout } = useAuth();
@@ -100,7 +102,7 @@ const PublicHeader: FC = () => {
                       {user.name}
                     </span>
                     <span className="block text-xs leading-tight text-slate-500">
-                      {roleLabel(user.role)}
+                      {roleLabel(user.role, user.backendRole)}
                     </span>
                   </span>
                   <ChevronDownIcon
