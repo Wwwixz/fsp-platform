@@ -115,7 +115,7 @@ public class DataSeeder implements ApplicationRunner {
             + "части России. Участникам предстоит решить 12 сложных задач за 5 часов. "
             + "Соревнование проводится по правилам ICPC.",
         "Новосибирск", today.plusDays(10), today.plusDays(12), today.plusDays(3),
-        200, "500 000 ₽", false, regNsk,
+        200, "500 000 ₽", true, regNsk,
         List.of("День 1, 10:00|Открытие и пробный тур",
             "День 2, 11:00|Основной тур соревнований",
             "День 3, 14:00|Награждение и закрытие"));
@@ -126,7 +126,7 @@ public class DataSeeder implements ApplicationRunner {
         "Региональный чемпионат по кибербезопасности: CTF-турнир формата attack-defense. "
             + "К участию допускаются спортсмены из Москвы.",
         "Москва", today.plusDays(25), today.plusDays(29), today.plusDays(18),
-        150, "300 000 ₽", false, regMsk,
+        150, "300 000 ₽", true, regMsk,
         List.of("День 1, 12:00|Открытие и брифинг",
             "Дни 2–4, 10:00|CTF-турнир",
             "День 5, 15:00|Разбор задач и награждение"));
@@ -137,7 +137,7 @@ public class DataSeeder implements ApplicationRunner {
         "Главные соревнования года, организованные Федерацией спортивного программирования. "
             + "Заявки подаются региональными представителями от сборных регионов.",
         "Казань", today.plusDays(45), today.plusDays(46), today.plusDays(35),
-        400, "1 000 000 ₽", false, federation,
+        400, "1 000 000 ₽", true, federation,
         List.of("День 1, 10:00|Открытие и основной тур",
             "День 2, 16:00|Награждение победителей"));
 
@@ -147,7 +147,7 @@ public class DataSeeder implements ApplicationRunner {
         "Соревнование по программированию робототехники: автономная навигация, "
             + "манипуляторы и командные миссии. Открыто для всех желающих.",
         "Санкт-Петербург", today.plusDays(60), today.plusDays(63), today.plusDays(45),
-        120, "400 000 ₽", false, regSpb,
+        120, "400 000 ₽", true, regSpb,
         List.of("День 1, 11:00|Регистрация и калибровка",
             "Дни 2–3, 10:00|Отборочные миссии",
             "День 4, 13:00|Финал и награждение"));
@@ -158,7 +158,7 @@ public class DataSeeder implements ApplicationRunner {
         "Межрегиональный турнир для студентов Урала: проектирование и реализация "
             + "высоконагруженных сервисов. Доступен спортсменам Свердловской и Челябинской областей.",
         "Екатеринбург", today.plusDays(75), today.plusDays(77), today.plusDays(60),
-        160, "200 000 ₽", false, regEkb,
+        160, "200 000 ₽", true, regEkb,
         List.of("День 1, 10:00|Квалификационный раунд",
             "День 2, 11:00|Продуктовый хакатон",
             "День 3, 14:00|Финальные защиты и награждение"));
@@ -187,43 +187,9 @@ public class DataSeeder implements ApplicationRunner {
         Discipline.ROBOTICS,
         "Прошедший зимний чемпионат: командные состязания роботов-спасателей.",
         "Пермь", today.minusDays(100), today.minusDays(99), today.minusDays(110),
-        180, "300 000 ₽", false, regNsk,
+        180, "300 000 ₽", true, regNsk,
         List.of("День 1, 10:00|Отборочные заезды",
             "День 2, 13:00|Финал и награждение"));
-
-    /* ---------- Команды ---------- */
-    TeamEntity siberianBears = team("Siberian Bears", cubokSibiri, alexey,
-        "bears@fsp.ru", "Новосибирская область", TeamStatus.FORMED,
-        List.of(alexey, evgeny, gleb));
-    TeamEntity dreamTeam = team("DreamTeam", cubokSibiri, dmitry,
-        "dream@fsp.ru", "Красноярский край", TeamStatus.RECRUITING,
-        List.of(dmitry));
-    TeamEntity altayDevs = team("Altay Devs", cubokSibiri, gleb,
-        "altay@fsp.ru", "Новосибирская область", TeamStatus.RECRUITING,
-        List.of(gleb));
-
-    TeamEntity codeMasters = team("Code Masters", champInfoSec, maria,
-        "cm@fsp.ru", "Москва", TeamStatus.FORMED,
-        List.of(maria, sofiya, ivanF));
-
-    TeamEntity spbItmo = team("SPb ITMO 1", arktika, maksim,
-        "itmo@fsp.ru", "Санкт-Петербург", TeamStatus.FORMED,
-        List.of(maksim, ksenia, timur));
-    TeamEntity pacificEast = team("Pacific East", arktika, ksenia,
-        "pacific@fsp.ru", "Санкт-Петербург", TeamStatus.RECRUITING,
-        List.of(ksenia));
-
-    TeamEntity urfuDelta = team("UrFU Delta", backendPro, artem,
-        "urfu@fsp.ru", "Свердловская область", TeamStatus.FORMED,
-        List.of(artem, pavel));
-    TeamEntity volgaCoders = team("Volga Coders", backendPro, dasha,
-        "volga@fsp.ru", "Татарстан", TeamStatus.RECRUITING,
-        List.of(dasha, timur));
-
-    // Команда прошедшего зимнего чемпионата, где состоит демо-спортсмен.
-    TeamEntity sibiryaks = team("Sibiryaks", winterChamp, evgeny,
-        "sib@fsp.ru", "Новосибирская область", TeamStatus.FORMED,
-        List.of(evgeny, ivan, alexey));
 
     /* ---------- Итоги прошедших соревнований (сценарий 8) ---------- */
     // Осенний кубок — индивидуальный зачёт.
@@ -233,22 +199,14 @@ public class DataSeeder implements ApplicationRunner {
     result(autumnCup, false, ksenia, null, 4, 790);
     result(autumnCup, false, artem, null, 5, 731);
 
-    // Зимний чемпионат — командный зачёт.
-    result(winterChamp, true, null, urfuDelta, 1, 820);
-    result(winterChamp, true, null, spbItmo, 2, 780);
-    result(winterChamp, true, null, codeMasters, 3, 745);
-    result(winterChamp, true, null, sibiryaks, 4, 688);
-    result(winterChamp, true, null, pacificEast, 5, 612);
+    // Зимний чемпионат — индивидуальный зачёт.
+    result(winterChamp, false, evgeny, null, 1, 820);
+    result(winterChamp, false, maksim, null, 2, 780);
+    result(winterChamp, false, maria, null, 3, 745);
+    result(winterChamp, false, ivan, null, 4, 688);
+    result(winterChamp, false, dasha, null, 5, 612);
 
     /* ---------- Заявки ---------- */
-    // Одобренные заявки команд активных соревнований.
-    application(siberianBears.getCaptain(), siberianBears, cubokSibiri, APPROVED, monthsAgo(3));
-    application(codeMasters.getCaptain(), codeMasters, champInfoSec, APPROVED, monthsAgo(3));
-    application(spbItmo.getCaptain(), spbItmo, arktika, APPROVED, monthsAgo(2));
-    application(urfuDelta.getCaptain(), urfuDelta, backendPro, APPROVED, monthsAgo(1));
-    application(dreamTeam.getCaptain(), dreamTeam, cubokSibiri, PENDING, daysAgo(3));
-    application(pacificEast.getCaptain(), pacificEast, arktika, PENDING, daysAgo(2));
-
     // Личная заявка демо-спортсмена (одобрена — попадёт в «ближайшие события»).
     application(ivan, null, cubokSibiri, APPROVED, monthsAgo(2));
 
@@ -351,26 +309,6 @@ public class DataSeeder implements ApplicationRunner {
           .build());
     }
     return competitions.save(c);
-  }
-
-  private TeamEntity team(String name, CompetitionEntity competition, UserEntity captain,
-                          String contact, String region, TeamStatus status,
-                          List<UserEntity> members) {
-    TeamEntity t = TeamEntity.builder()
-        .name(name)
-        .competition(competition)
-        .captain(captain)
-        .status(status)
-        .contact(contact)
-        .region(region)
-        .rating(0)
-        .wins(0)
-        .createdAt(Instant.now())
-        .build();
-    for (UserEntity m : members) {
-      t.addMember(m);
-    }
-    return teams.save(t);
   }
 
   private void result(CompetitionEntity c, boolean isTeam, UserEntity user, TeamEntity team,
