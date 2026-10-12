@@ -6,14 +6,20 @@ const labelByStatus: Record<ApplicationStatus, string> = {
   rejected: 'Отклонено',
 };
 
-const toneByStatus: Record<ApplicationStatus, 'green' | 'orange' | 'red'> = {
-  approved: 'green',
-  pending: 'orange',
-  rejected: 'red',
+const toneByStatus: Record<ApplicationStatus, string> = {
+  approved: 'bg-emerald-500/10 text-emerald-300 ring-emerald-500/25',
+  pending: 'bg-amber-500/10 text-amber-300 ring-amber-500/25',
+  rejected: 'bg-rose-500/10 text-rose-300 ring-rose-500/25',
 };
 
 export function StatusBadge({ status }: { status: ApplicationStatus }) {
-  return <span className={`badge ${toneByStatus[status]}`}>{labelByStatus[status]}</span>;
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold ring-1 ${toneByStatus[status]}`}
+    >
+      {labelByStatus[status]}
+    </span>
+  );
 }
 
 export function statusLabel(status: ApplicationStatus): string {

@@ -15,6 +15,14 @@ interface FormErrors {
   agree?: string;
 }
 
+const inputBase =
+  'w-full rounded-xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-sm text-slate-200 transition placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20';
+
+const labelBase =
+  'block mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400';
+
+const errorBase = 'mt-1.5 block text-xs font-medium text-rose-400';
+
 export function RegisterPage() {
   const { user, register } = useAuth();
   const navigate = useNavigate();
@@ -59,47 +67,47 @@ export function RegisterPage() {
 
   return (
     <AuthLayout active="register">
-      <form className="auth-form" onSubmit={handleSubmit} noValidate>
-        <div className="field">
-          <label className="field-label" htmlFor="reg-name">
+      <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+        <div>
+          <label className={labelBase} htmlFor="reg-name">
             Имя и фамилия
           </label>
           <input
             id="reg-name"
-            className={`input${errors.name ? ' input-invalid' : ''}`}
+            className={`${inputBase}${errors.name ? ' border-rose-500/60' : ''}`}
             type="text"
             placeholder="Иван Петров"
             value={name}
             onChange={(e) => setName(e.target.value)}
             autoComplete="name"
           />
-          {errors.name && <span className="field-error">{errors.name}</span>}
+          {errors.name && <span className={errorBase}>{errors.name}</span>}
         </div>
 
-        <div className="field">
-          <label className="field-label" htmlFor="reg-email">
+        <div>
+          <label className={labelBase} htmlFor="reg-email">
             Email
           </label>
           <input
             id="reg-email"
-            className={`input${errors.email ? ' input-invalid' : ''}`}
+            className={`${inputBase}${errors.email ? ' border-rose-500/60' : ''}`}
             type="email"
             placeholder="example@mail.ru"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
           />
-          {errors.email && <span className="field-error">{errors.email}</span>}
+          {errors.email && <span className={errorBase}>{errors.email}</span>}
         </div>
 
-        <div className="field">
-          <label className="field-label" htmlFor="reg-password">
+        <div>
+          <label className={labelBase} htmlFor="reg-password">
             Пароль
           </label>
-          <div className="input-wrap">
+          <div className="relative">
             <input
               id="reg-password"
-              className={`input${errors.password ? ' input-invalid' : ''}`}
+              className={`${inputBase}${errors.password ? ' border-rose-500/60' : ''}`}
               type={showPassword ? 'text' : 'password'}
               placeholder="Минимум 6 символов"
               value={password}
@@ -108,75 +116,93 @@ export function RegisterPage() {
             />
             <button
               type="button"
-              className="input-trailing"
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-500 hover:text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60"
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
             >
               {showPassword ? <EyeOffIcon size={19} /> : <EyeIcon size={19} />}
             </button>
           </div>
-          {errors.password && <span className="field-error">{errors.password}</span>}
+          {errors.password && <span className={errorBase}>{errors.password}</span>}
         </div>
 
-        <div className="field">
-          <label className="field-label" htmlFor="reg-confirm">
+        <div>
+          <label className={labelBase} htmlFor="reg-confirm">
             Подтвердите пароль
           </label>
           <input
             id="reg-confirm"
-            className={`input${errors.confirm ? ' input-invalid' : ''}`}
+            className={`${inputBase}${errors.confirm ? ' border-rose-500/60' : ''}`}
             type={showPassword ? 'text' : 'password'}
             placeholder="Повторите пароль"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             autoComplete="new-password"
           />
-          {errors.confirm && <span className="field-error">{errors.confirm}</span>}
+          {errors.confirm && <span className={errorBase}>{errors.confirm}</span>}
         </div>
 
-        <div className="field">
-          <span className="field-label">Я регистрируюсь как</span>
-          <div className="role-switch">
-            <button
-              type="button"
-              className={`role-option${role === 'athlete' ? ' active' : ''}`}
-              onClick={() => setRole('athlete')}
-            >
-              <UserIcon size={18} />
-              Спортсмен
-            </button>
-            <button
-              type="button"
-              className={`role-option${role === 'organizer' ? ' active' : ''}`}
-              onClick={() => setRole('organizer')}
-            >
-              <BuildingIcon size={18} />
-              Региональный представитель
-            </button>
+        <div>
+          <span className={labelBase}>Я регистрируюсь как</span>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="group relative flex cursor-pointer flex-col gap-1.5 rounded-2xl border border-slate-800 bg-slate-900/60 p-4 transition-all duration-300 hover:border-slate-700 has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-500/10 has-[:checked]:ring-1 has-[:checked]:ring-indigo-500/40 focus-within:ring-2 focus-within:ring-indigo-400/60">
+              <input
+                type="radio"
+                name="register-role"
+                className="sr-only"
+                checked={role === 'athlete'}
+                onChange={() => setRole('athlete')}
+              />
+              <UserIcon
+                size={18}
+                className="text-slate-400 group-has-[:checked]:text-indigo-400"
+              />
+              <span className="text-sm font-semibold text-slate-200">
+                Спортсмен
+              </span>
+            </label>
+
+            <label className="group relative flex cursor-pointer flex-col gap-1.5 rounded-2xl border border-slate-800 bg-slate-900/60 p-4 transition-all duration-300 hover:border-slate-700 has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-500/10 has-[:checked]:ring-1 has-[:checked]:ring-indigo-500/40 focus-within:ring-2 focus-within:ring-indigo-400/60">
+              <input
+                type="radio"
+                name="register-role"
+                className="sr-only"
+                checked={role === 'organizer'}
+                onChange={() => setRole('organizer')}
+              />
+              <BuildingIcon
+                size={18}
+                className="text-slate-400 group-has-[:checked]:text-indigo-400"
+              />
+              <span className="text-sm font-semibold text-slate-200">
+                Региональный представитель
+              </span>
+            </label>
           </div>
-          <p className="role-hint">
+          <p className="mt-2 text-xs text-slate-500">
             {role === 'athlete'
               ? 'Участие в соревнованиях, команды и личные результаты'
               : 'Создание соревнований, приём заявок и аналитика'}
           </p>
         </div>
 
-        <label className="checkbox">
-          <input
-            type="checkbox"
-            checked={agree}
-            onChange={(e) => setAgree(e.target.checked)}
-          />
-          <span className="checkbox-box">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m5 12.5 4.5 4.5L19 7.5" />
-            </svg>
-          </span>
-          Согласен с условиями и политикой конфиденциальности
-        </label>
-        {errors.agree && <span className="field-error" style={{ marginTop: -12 }}>{errors.agree}</span>}
+        <div>
+          <label className="flex items-center gap-2.5 text-sm text-slate-400 cursor-pointer hover:text-slate-300 transition">
+            <input
+              type="checkbox"
+              checked={agree}
+              onChange={(e) => setAgree(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0"
+            />
+            Согласен с условиями и политикой конфиденциальности
+          </label>
+          {errors.agree && <span className={errorBase}>{errors.agree}</span>}
+        </div>
 
-        <button type="submit" className="btn btn-primary btn-block">
+        <button
+          type="submit"
+          className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 active:scale-[0.98]"
+        >
           Зарегистрироваться
         </button>
       </form>
